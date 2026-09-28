@@ -1,4 +1,3 @@
-# Humicordia.github.io
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -77,13 +76,43 @@
             text-rendering: optimizeLegibility;
         }
 
+        body.dragging-active {
+            overflow: hidden;
+            touch-action: none;
+            cursor: grabbing;
+        }
+
         .app { max-width: 600px; margin: 0 auto; padding: 30px 18px 110px; }
 
         .header-top {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 12px; margin-bottom: 18px;
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 12px; margin-bottom: 16px;
+        }
+
+        .header-titles {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
         }
         h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: .02em; }
+
+        .all-streak {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+            letter-spacing: .02em;
+            line-height: 1.3;
+        }
+        .all-streak b {
+            color: var(--green);
+            font-family: var(--font-digit);
+            font-size: 15px;
+            font-weight: 700;
+        }
 
         .date-chip {
             display: inline-flex; align-items: center; gap: 5px;
@@ -93,6 +122,7 @@
             border: 1.5px solid transparent; background: transparent;
             font-family: inherit; line-height: 1.2;
             transition: background .2s, color .2s, border-color .2s, transform .12s;
+            flex: 0 0 auto;
         }
         .date-chip:hover { color: var(--text); background: var(--card); border-color: var(--line); }
         .date-chip:active { transform: scale(.97); }
@@ -116,7 +146,23 @@
             font-size: 16px; font-weight: 700;
         }
 
-        .toolbar { display: flex; gap: 10px; margin-bottom: 14px; }
+        .toolbar {
+            display: flex; gap: 8px; margin-bottom: 14px;
+            flex-wrap: nowrap;
+        }
+        .toolbar .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 10px 6px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        #moreBtn {
+            flex: 0 0 auto;
+            width: 46px;
+            padding: 10px 0;
+            font-size: 17px;
+        }
 
         .btn {
             appearance: none; border: none; font: inherit;
@@ -152,11 +198,30 @@
             cursor: pointer; user-select: none;
             transition: transform .15s ease, outline-color .2s, opacity .2s;
             outline: 2px solid transparent;
+            -webkit-touch-callout: none;
         }
         .plan:active { transform: scale(.99); }
         .plan.selected { outline-color: var(--accent); }
         .plan.locked { opacity: .58; }
         .plan.locked .check { cursor: not-allowed; }
+
+        .plan.dragging {
+            box-shadow: 0 20px 44px -12px rgba(10,20,40,.45);
+            transform: scale(1.025);
+            cursor: grabbing;
+            transition: none;
+            outline-color: transparent !important;
+        }
+        .plan-placeholder {
+            list-style: none;
+            border: 2px dashed var(--accent);
+            border-radius: var(--radius);
+            background: rgba(76,125,255,.06);
+            flex-shrink: 0;
+        }
+
+        .plan-info { cursor: grab; }
+        .plan-info:active { cursor: grabbing; }
 
         .check {
             flex: 0 0 auto; width: 30px; height: 30px; padding: 0; border-radius: 50%;
@@ -198,7 +263,6 @@
             transition: background .2s, color .2s;
         }
         .count-badge.done { background: rgba(35,193,122,.16); color: var(--green); }
-        /* 超额完成 —— 橙色徽章，突出显示 */
         .count-badge.over {
             background: rgba(245,166,35,.18);
             color: var(--orange);
@@ -305,6 +369,46 @@
         .menu-item:hover { background: var(--line); }
         .menu-item.danger { color: var(--red); }
 
+        /* ---------- 批量设置 ---------- */
+        .bs-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; font-size: 13px; color: var(--muted);
+        }
+        .bs-toolbar b {
+            color: var(--accent);
+            font-family: var(--font-digit);
+            font-size: 15px;
+        }
+        .bs-toolbar button {
+            background: none; border: none; color: var(--accent);
+            font-family: inherit; font-size: 13px; cursor: pointer;
+            padding: 4px 10px; border-radius: 6px;
+            transition: background .15s;
+        }
+        .bs-toolbar button:hover { background: var(--line); }
+
+        .bs-list {
+            list-style: none; margin: 0; padding: 6px;
+            display: flex; flex-direction: column; gap: 3px;
+            max-height: 168px; overflow-y: auto;
+            border: 1.5px solid var(--line); border-radius: 12px;
+        }
+        .bs-list li {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 11px; border-radius: 8px;
+            cursor: pointer; font-size: 15px;
+            transition: background .15s;
+        }
+        .bs-list li:hover { background: var(--line); }
+        .bs-list li input {
+            flex: 0 0 auto;
+            pointer-events: none;
+        }
+        .bs-list li span {
+            flex: 1; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
         /* ---------- 日历 ---------- */
         .cal-header {
             display: flex; align-items: center; justify-content: space-between;
@@ -363,7 +467,7 @@
         .cal-list {
             list-style: none; margin: 0; padding: 0;
             display: flex; flex-direction: column; gap: 6px;
-            max-height: 190px; overflow-y: auto;
+            max-height: 220px; overflow-y: auto;
         }
         .cal-list li {
             display: flex; align-items: center; gap: 10px;
@@ -383,6 +487,37 @@
         .cal-status.part { color: var(--orange); }
         .cal-status.miss { color: var(--muted); }
         .cal-status.over { color: var(--orange); }
+
+        /* 日历里的打卡按钮 */
+        .cal-check-btn {
+            flex: 0 0 auto;
+            width: 28px; height: 28px; padding: 0;
+            border-radius: 50%;
+            border: 2px solid var(--line);
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font-digit);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+            display: grid; place-items: center;
+            cursor: pointer;
+            transition: background .18s, border-color .18s, color .18s, transform .1s;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+        .cal-check-btn:hover { background: var(--line); }
+        .cal-check-btn:active { transform: scale(.88); }
+        .cal-check-btn.on {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+        .cal-check-btn.partial {
+            background: rgba(35,193,122,.18);
+            border-color: var(--green);
+            color: var(--green);
+        }
 
         .cal-empty { text-align: center; color: var(--muted); font-size: 14px; padding: 18px 0; }
 
@@ -422,14 +557,17 @@
 
 <div class="app">
     <header class="header-top">
-        <h1>每日打卡</h1>
+        <div class="header-titles">
+            <h1>每日打卡</h1>
+            <div class="all-streak" id="allStreak" hidden>🔥 已连续打卡 <b id="allStreakNum">0</b> 天</div>
+        </div>
         <button class="date-chip" id="dateChip" type="button">
             <span id="dateChipText"></span>
             <span class="chip-arrow">▾</span>
         </button>
     </header>
 
-    <div class="tip-notice">💡 点击右上角日期查看打卡日历 · 点击圆圈无上限累加 · 长按圆圈清零今日进度 · 数据在本地，请定期备份</div>
+    <div class="tip-notice">💡 点击右上角日期查看日历，可补卡或提前打卡 · 长按圆圈清零当日进度 · 长按方块后半部分拖动排序</div>
 
     <section class="progress-card">
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -437,16 +575,17 @@
     </section>
 
     <div class="toolbar" id="toolbar">
-        <button class="btn primary" id="addBtn">+ 批量添加</button>
-        <button class="btn" id="selectBtn">批量删除</button>
-        <button class="btn ghost" id="moreBtn">⋯</button>
+        <button class="btn primary" id="addBtn" type="button">+ 批量添加</button>
+        <button class="btn" id="bulkSetBtn" type="button">批量设置</button>
+        <button class="btn" id="selectBtn" type="button">批量删除</button>
+        <button class="btn ghost" id="moreBtn" type="button">⋯</button>
     </div>
 
     <div class="select-bar" id="selectBar" hidden>
         <label><input type="checkbox" id="selectAllChk"> 全选</label>
         <span class="count" id="selectCount">已选 0 项</span>
-        <button class="btn danger sm" id="deleteSelectedBtn">删除</button>
-        <button class="btn ghost sm" id="cancelSelectBtn">取消</button>
+        <button class="btn danger sm" id="deleteSelectedBtn" type="button">删除</button>
+        <button class="btn ghost sm" id="cancelSelectBtn" type="button">取消</button>
     </div>
 
     <ul class="plan-list" id="planList"></ul>
@@ -466,8 +605,8 @@
         <p class="hint">每行一个计划，支持一次粘贴多条（重复的会自动跳过）<br>添加后点击计划文字即可设置起止日期与每日目标次数。</p>
         <textarea id="bulkInput" placeholder="早起&#10;运动30分钟&#10;喝水&#10;阅读20页"></textarea>
         <div class="modal-actions">
-            <button class="btn ghost" data-close>取消</button>
-            <button class="btn primary" id="confirmAddBtn">添加</button>
+            <button class="btn ghost" data-close type="button">取消</button>
+            <button class="btn primary" id="confirmAddBtn" type="button">添加</button>
         </div>
     </div>
 
@@ -491,33 +630,79 @@
         </div>
 
         <div class="quick-row">
-            <button class="btn ghost sm" data-preset="today">今天开始</button>
-            <button class="btn ghost sm" data-preset="week">7天周期</button>
-            <button class="btn ghost sm" data-preset="month">30天周期</button>
-            <button class="btn ghost sm" data-preset="clear">清除日期</button>
+            <button class="btn ghost sm" data-preset="today" type="button">今天开始</button>
+            <button class="btn ghost sm" data-preset="week" type="button">7天周期</button>
+            <button class="btn ghost sm" data-preset="month" type="button">30天周期</button>
+            <button class="btn ghost sm" data-preset="clear" type="button">清除日期</button>
         </div>
 
         <label class="field-label" for="editGoal">每日目标次数（如喝水8杯，就填 8）</label>
         <div class="goal-row">
             <input type="number" class="modal-input" id="editGoal" min="1" max="99" step="1" value="1" inputmode="numeric">
             <div class="goal-presets">
-                <button class="btn ghost sm" data-goal="1">1次</button>
-                <button class="btn ghost sm" data-goal="3">3次</button>
-                <button class="btn ghost sm" data-goal="5">5次</button>
-                <button class="btn ghost sm" data-goal="8">8次</button>
+                <button class="btn ghost sm" data-goal="1" type="button">1次</button>
+                <button class="btn ghost sm" data-goal="3" type="button">3次</button>
+                <button class="btn ghost sm" data-goal="5" type="button">5次</button>
+                <button class="btn ghost sm" data-goal="8" type="button">8次</button>
             </div>
         </div>
 
         <div class="modal-actions">
-            <button class="btn ghost" data-close>取消</button>
-            <button class="btn primary" id="confirmEditBtn">保存</button>
+            <button class="btn ghost" data-close type="button">取消</button>
+            <button class="btn primary" id="confirmEditBtn" type="button">保存</button>
+        </div>
+    </div>
+
+    <!-- 批量设置 -->
+    <div class="modal" id="bulkSetModal" hidden>
+        <h2>批量设置</h2>
+        <p class="hint">勾选计划后，统一设置起止日期与每日目标次数。<br>日期留空表示不限制时间。</p>
+
+        <div class="bs-toolbar">
+            <span>已选 <b id="bsCount">0</b> 项</span>
+            <button type="button" id="bsSelectToggle">取消全选</button>
+        </div>
+        <ul class="bs-list" id="bsList"></ul>
+
+        <div class="date-row" style="margin-top: 14px;">
+            <div>
+                <label class="field-label" for="bsStart">开始日期</label>
+                <input type="date" class="modal-input" id="bsStart">
+            </div>
+            <div>
+                <label class="field-label" for="bsEnd">结束日期</label>
+                <input type="date" class="modal-input" id="bsEnd">
+            </div>
+        </div>
+
+        <div class="quick-row">
+            <button class="btn ghost sm" data-bspreset="today" type="button">今天开始</button>
+            <button class="btn ghost sm" data-bspreset="week" type="button">7天周期</button>
+            <button class="btn ghost sm" data-bspreset="month" type="button">30天周期</button>
+            <button class="btn ghost sm" data-bspreset="clear" type="button">清除日期</button>
+        </div>
+
+        <label class="field-label" for="bsGoal">每日目标次数（如喝水8杯，就填 8）</label>
+        <div class="goal-row">
+            <input type="number" class="modal-input" id="bsGoal" min="1" max="99" step="1" value="1" inputmode="numeric">
+            <div class="goal-presets">
+                <button class="btn ghost sm" data-bsgoal="1" type="button">1次</button>
+                <button class="btn ghost sm" data-bsgoal="3" type="button">3次</button>
+                <button class="btn ghost sm" data-bsgoal="5" type="button">5次</button>
+                <button class="btn ghost sm" data-bsgoal="8" type="button">8次</button>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn ghost" data-close type="button">取消</button>
+            <button class="btn primary" id="bsApplyBtn" type="button">应用</button>
         </div>
     </div>
 
     <!-- 打卡日历 -->
     <div class="modal" id="calendarModal" hidden>
         <h2>打卡日历</h2>
-        <p class="hint">绿点=全部完成 · 橙点=部分完成 · 灰点=未完成 · 空心=未来</p>
+        <p class="hint">绿点=全部完成 · 橙点=部分完成 · 灰点=未完成 · 空心=未来<br>点击右侧圆圈打卡（过去补卡 / 未来确认一次）· 长按圆圈可清零该日记录</p>
 
         <div class="cal-header">
             <button class="cal-nav" id="calPrev" type="button" title="上个月">‹</button>
@@ -554,12 +739,12 @@
     <div class="modal" id="menuModal" hidden>
         <h2>更多</h2>
         <p class="hint">数据保存在本机浏览器，清理缓存数据会丢失，请做好备份。</p>
-        <button class="menu-item" id="exportBtn">📤 导出数据（JSON备份）</button>
-        <button class="menu-item" id="importBtn">📥 导入备份文件</button>
-        <button class="menu-item" id="cleanBtn">🧹 清理 1 年前的旧记录</button>
-        <button class="menu-item danger" id="clearBtn">🗑 清空全部计划</button>
+        <button class="menu-item" id="exportBtn" type="button">📤 导出数据（JSON备份）</button>
+        <button class="menu-item" id="importBtn" type="button">📥 导入备份文件</button>
+        <button class="menu-item" id="cleanBtn" type="button">🧹 清理 1 年前的旧记录</button>
+        <button class="menu-item danger" id="clearBtn" type="button">🗑 清空全部计划</button>
         <div class="modal-actions">
-            <button class="btn ghost" data-close>关闭</button>
+            <button class="btn ghost" data-close type="button">关闭</button>
         </div>
         <input type="file" id="fileInput" accept="application/json,.json" hidden>
     </div>
@@ -572,27 +757,43 @@
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'daily-checkin-v1';
-    const $ = function (s) { return document.querySelector(s); };
+    var STORAGE_KEY = 'daily-checkin-v1';
+    var $ = function (s) { return document.querySelector(s); };
 
-    const state = { plans: [] };
-    let selectMode = false;
-    const selected = new Set();
-    let lastDay = '';
-    let editingPlanId = null;
-    let toastTimer = null;
+    var state = { plans: [] };
+    var selectMode = false;
+    var selected = new Set();
+    var lastDay = '';
+    var editingPlanId = null;
+    var toastTimer = null;
 
-    // 长按清零
-    let pressTimer = null;
-    let lastLongPressAt = 0;
+    // 长按清零（主页）
+    var pressTimer = null;
+    var lastLongPressAt = 0;
+
+    // 拖动排序
+    var dragState = null;
+    var dragPressTimer = null;
+    var dragStartY = 0;
+
+    // 批量设置选择
+    var bsSelected = new Set();
 
     // 日历
-    let calYear = 0;
-    let calMonth = 0;
-    let calSelectedKey = '';
+    var calYear = 0;
+    var calMonth = 0;
+    var calSelectedKey = '';
 
-    // 确认弹窗回调
-    let confirmCallback = null;
+    // 已确认提前打卡的未来日期（同一天只弹一次确认）
+    var futureConfirmedDates = new Set();
+
+    // 日历内长按清零
+    var calPressTimer = null;
+    var calLastLongPressAt = 0;
+
+    // 确认弹窗回调 & 返回弹窗
+    var confirmCallback = null;
+    var confirmReturnModal = null;
 
     // ====================工具函数====================
     function pad(n) { return String(n).padStart(2, '0'); }
@@ -600,14 +801,14 @@
     function today() { return toKey(new Date()); }
 
     function shiftKey(key, delta) {
-        const p = key.split('-').map(Number);
-        const d = new Date(p[0], p[1] - 1, p[2]);
+        var p = key.split('-').map(Number);
+        var d = new Date(p[0], p[1] - 1, p[2]);
         d.setDate(d.getDate() + delta);
         return toKey(d);
     }
 
     function weekdayText(key) {
-        const p = key.split('-').map(Number);
+        var p = key.split('-').map(Number);
         return '周' + '日一二三四五六'[new Date(p[0], p[1] - 1, p[2]).getDay()];
     }
 
@@ -623,14 +824,14 @@
 
     function normDate(v) {
         if (typeof v !== 'string') return null;
-        const s = v.trim();
+        var s = v.trim();
         return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
     }
 
     function fmtShort(key) {
         if (!key) return '';
-        const p = key.split('-').map(Number);
-        const y = new Date().getFullYear();
+        var p = key.split('-').map(Number);
+        var y = new Date().getFullYear();
         return (p[0] !== y ? p[0] + '年' : '') + p[1] + '月' + p[2] + '日';
     }
 
@@ -648,18 +849,18 @@
     }
 
     function normGoal(v) {
-        let g = parseInt(v, 10);
+        var g = parseInt(v, 10);
         if (!g || g < 1) g = 1;
         if (g > 99) g = 99;
         return g;
     }
 
     function normRecords(rec) {
-        const out = {};
+        var out = {};
         if (!rec || typeof rec !== 'object') return out;
-        for (const k in rec) {
+        for (var k in rec) {
             if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
-            const v = rec[k];
+            var v = rec[k];
             if (v === true) out[k] = 1;
             else if (typeof v === 'number' && v > 0) out[k] = Math.round(v);
             else if (v) out[k] = 1;
@@ -681,55 +882,47 @@
 
     function loadData() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            var raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return;
-            const data = JSON.parse(raw);
+            var data = JSON.parse(raw);
             if (data && Array.isArray(data.plans)) {
                 state.plans = data.plans.map(normalizePlan);
             }
         } catch (e) { console.warn('读取数据失败：', e); }
     }
 
-    // 保存数据：失败时自动清理 1 年前记录重试
     function saveData() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             return true;
         } catch (e) {
             console.warn('保存失败，尝试清理旧记录：', e);
-            const cutoff = shiftKey(today(), -365);
-            let cleaned = 0;
+            var cutoff = shiftKey(today(), -365);
             state.plans.forEach(function (p) {
-                const nr = {};
-                for (const k in p.records) {
+                var nr = {};
+                for (var k in p.records) {
                     if (k >= cutoff) nr[k] = p.records[k];
-                    else cleaned++;
                 }
                 p.records = nr;
             });
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                if (cleaned > 0) {
-                    toast('⚠️存储紧张，已自动清理 ' + cleaned + ' 条旧记录');
-                    render();
-                }
                 return true;
             } catch (e2) {
                 console.warn('清理后仍无法保存：', e2);
-                toast('⚠️本地存储已满，请在「更多」中导出备份后清理数据');
                 return false;
             }
         }
     }
 
     function isDayDone(plan, dateKey) {
-        const goal = plan.goal || 1;
+        var goal = plan.goal || 1;
         return (plan.records[dateKey] || 0) >= goal;
     }
 
     function getStreak(plan) {
-        let cur = isDayDone(plan, today()) ? today() : shiftKey(today(), -1);
-        let streak = 0;
+        var cur = isDayDone(plan, today()) ? today() : shiftKey(today(), -1);
+        var streak = 0;
         while (isDayDone(plan, cur) && streak < 3000) {
             streak++;
             cur = shiftKey(cur, -1);
@@ -741,44 +934,43 @@
 
     // ====================渲染====================
     function planHTML(plan, t) {
-        const goal = plan.goal || 1;
-        const count = plan.records[t] || 0;
-        const done = count >= goal;
-        const over = count > goal;
-        const sel = selected.has(plan.id);
-        const status = planStatus(plan, t);
-        const locked = status !== 'active';
+        var goal = plan.goal || 1;
+        var count = plan.records[t] || 0;
+        var done = count >= goal;
+        var over = count > goal;
+        var sel = selected.has(plan.id);
+        var status = planStatus(plan, t);
+        var locked = status !== 'active';
 
-        const streak = getStreak(plan);
-        const total = totalOf(plan);
+        var streak = getStreak(plan);
+        var total = totalOf(plan);
 
-        let meta = '📅 ' + rangeText(plan) + ' · ';
+        var meta = '📅 ' + rangeText(plan) + ' · ';
         meta += (streak > 0 ? '🔥连续 ' + streak + ' 天 · ' : '');
         meta += '累计 ' + total + ' 天';
 
-        let tag = '';
+        var tag = '';
         if (status === 'before') tag = ' <span class="tag wait">未开始</span>';
         else if (status === 'after') tag = ' <span class="tag over">已结束</span>';
 
-        let cls = 'plan';
+        var cls = 'plan';
         if (done) cls += ' done';
         if (sel) cls += ' selected';
         if (locked) cls += ' locked';
 
-        let checkHTML;
+        var checkHTML;
         if (selectMode) {
             checkHTML = '<span class="checkbox' + (sel ? ' on' : '') + '">✓</span>';
         } else {
-            let ccls = 'check';
-            let ctext = '';
+            var ccls = 'check';
+            var ctext = '';
             if (done) { ccls += ' on'; ctext = '✓'; }
             else if (count > 0) { ccls += ' partial'; ctext = String(count); }
             if (goal > 1) ccls += ' multi';
             checkHTML = '<button class="' + ccls + '" tabindex="-1">' + ctext + '</button>';
         }
 
-        // ★ 核心修复：只要计数 > 1（无论目标多少），都显示次数徽章，让用户看到累加
-        let badgeHTML = '';
+        var badgeHTML = '';
         if (goal > 1 || count > 1) {
             badgeHTML = '<span class="count-badge' + (done ? ' done' : '') + (over ? ' over' : '') + '">' +
                         count + '/' + goal + '</span>';
@@ -798,96 +990,276 @@
     }
 
     function render() {
-        const t = today();
-        const plans = state.plans;
+        var t = today();
+        var plans = state.plans;
 
-        const activePlans = plans.filter(p => planStatus(p, t) === 'active');
-        const doneCount = activePlans.filter(p => isDayDone(p, t)).length;
+        var activePlans = plans.filter(function (p) { return planStatus(p, t) === 'active'; });
+        var doneCount = activePlans.filter(function (p) { return isDayDone(p, t); }).length;
 
-        const now = new Date();
-        $('#dateChipText').textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${weekdayText(t)}`;
+        var now = new Date();
+        $('#dateChipText').textContent = (now.getMonth() + 1) + '月' + now.getDate() + '日 · ' + weekdayText(t);
 
-        let pct = 0;
+        // 连续完成全部计划天数（≥ 3 天显示）
+        var allStreak = getAllDoneStreak();
+        if (allStreak >= 3) {
+            $('#allStreakNum').textContent = allStreak;
+            $('#allStreak').hidden = false;
+        } else {
+            $('#allStreak').hidden = true;
+        }
+
+        var pct = 0;
         if (!plans.length) {
             $('#progressLabel').textContent = '还没有计划，点击「批量添加」开始吧';
         } else if (!activePlans.length) {
-            $('#progressLabel').innerHTML = `今日没有进行中的计划（共 ${plans.length} 项）`;
+            $('#progressLabel').innerHTML = '今日没有进行中的计划（共 ' + plans.length + ' 项）';
         } else {
             pct = (doneCount / activePlans.length) * 100;
-            const allDone = doneCount === activePlans.length;
-            $('#progressLabel').innerHTML = `今日完成 <strong>${doneCount}</strong> / ${activePlans.length}${allDone ? '　🎉 全部达成！' : ''}`;
+            var allDone = doneCount === activePlans.length;
+            $('#progressLabel').innerHTML = '今日完成 <strong>' + doneCount + '</strong> / ' + activePlans.length +
+                (allDone ? '　🎉 全部达成！' : '');
         }
         $('#progressFill').style.width = pct + '%';
 
         $('#toolbar').hidden = selectMode;
         $('#selectBar').hidden = !selectMode;
         if (selectMode) {
-            const allSel = plans.length > 0 && selected.size === plans.length;
+            var allSel = plans.length > 0 && selected.size === plans.length;
             $('#selectCount').textContent = '已选 ' + selected.size + ' 项';
             $('#selectAllChk').checked = allSel;
             $('#selectAllChk').indeterminate = selected.size > 0 && !allSel;
         }
 
-        $('#planList').innerHTML = plans.map(p => planHTML(p, t)).join('');
+        $('#planList').innerHTML = plans.map(function (p) { return planHTML(p, t); }).join('');
         $('#empty').hidden = plans.length > 0;
     }
 
-    // ====================打卡（点击无上限累加）====================
+    // ====================打卡（今天）====================
     function toggleCheck(plan) {
-        const t = today();
-        const status = planStatus(plan, t);
-        if (status === 'before') { toast(`计划 ${fmtShort(plan.start)} 才开始`); return; }
-        if (status === 'after') { toast(`计划已于 ${fmtShort(plan.end)} 结束`); return; }
+        var t = today();
+        var status = planStatus(plan, t);
+        if (status === 'before') { toast('计划 ' + fmtShort(plan.start) + ' 才开始'); return; }
+        if (status === 'after') { toast('计划已于 ' + fmtShort(plan.end) + ' 结束'); return; }
 
-        const goal = plan.goal || 1;
-        const cur = plan.records[t] || 0;
-        const next = cur + 1;
+        var goal = plan.goal || 1;
+        var cur = plan.records[t] || 0;
+        var next = cur + 1;
 
-        // ★ 无论目标多少，始终累加，永不清零
         plan.records[t] = next;
         saveData();
         render();
 
-        const el = document.querySelector(`.plan[data-id="${plan.id}"] .check`);
+        var el = document.querySelector('.plan[data-id="' + plan.id + '"] .check');
         if (el) el.classList.add('pop');
 
         if (goal > 1 && next === goal) {
-            toast(`🎉「${plan.name}」今日 ${goal}/${goal} 完成！`);
-        } else if (next > goal && next === goal + 1) {
-            toast(`「${plan.name}」已超额，继续累计中…`);
+            toast('🎉「' + plan.name + '」今日 ' + goal + '/' + goal + ' 完成！');
         } else if (next > goal) {
-            toast(`「${plan.name}」当前 ${next}/${goal}`);
+            toast('🎉 恭喜您超额完成任务「' + plan.name + '」');
         }
     }
 
-    // ====================长按清零====================
+    // ====================打卡（指定日期，日历用）====================
+    function toggleCheckOnDate(plan, dateKey) {
+        var status = planStatus(plan, dateKey);
+        if (status === 'before') {
+            toast('计划 ' + fmtShort(plan.start) + ' 才开始');
+            return;
+        }
+        if (status === 'after') {
+            toast('计划已于 ' + fmtShort(plan.end) + ' 结束');
+            return;
+        }
+
+        // 未来日期：弹窗确认（同一天只弹一次）
+        if (dateKey > today()) {
+            if (futureConfirmedDates.has(dateKey)) {
+                doCheckOnDate(plan, dateKey);
+                return;
+            }
+            showConfirm(
+                '提前打卡',
+                '确定要为 <b>' + fmtShort(dateKey) + '</b> 的「<b>' + escapeHTML(plan.name) + '</b>」提前打卡吗？<br>同一天的再次打卡将不再提醒。',
+                function () {
+                    futureConfirmedDates.add(dateKey);
+                    doCheckOnDate(plan, dateKey);
+                },
+                'calendarModal'
+            );
+            return;
+        }
+
+        // 过去 / 今天：直接打卡
+        doCheckOnDate(plan, dateKey);
+    }
+
+    function doCheckOnDate(plan, dateKey) {
+        var goal = plan.goal || 1;
+        var cur = plan.records[dateKey] || 0;
+        var next = cur + 1;
+
+        plan.records[dateKey] = next;
+        saveData();
+        render();
+
+        // 若日历仍开着，同步刷新
+        if (!$('#calendarModal').hidden) renderCalendar();
+
+        if (goal > 1 && next === goal) {
+            toast('🎉「' + plan.name + '」' + fmtShort(dateKey) + ' 完成！');
+        } else if (next > goal) {
+            toast('🎉 恭喜您超额完成任务「' + plan.name + '」');
+        } else {
+            toast('「' + plan.name + '」' + fmtShort(dateKey) + ' 已打卡 ' + next + '/' + goal);
+        }
+    }
+
+    // ====================长按清零（主页）====================
     function resetToday(planId) {
-        const plan = state.plans.find(p => p.id === planId);
+        var plan = state.plans.find(function (p) { return p.id === planId; });
         if (!plan) return;
-        const t = today();
+        var t = today();
         if (plan.records[t]) {
             delete plan.records[t];
             saveData();
             render();
-            toast(`「${plan.name}」今日进度已清零`);
+            toast('「' + plan.name + '」今日进度已清零');
         } else {
-            toast(`「${plan.name}」今日暂无记录`);
+            toast('「' + plan.name + '」今日暂无记录');
         }
     }
 
+    // ====================长按清零（日历内指定日期）====================
+    function resetDatePlan(planId, dateKey) {
+        var plan = state.plans.find(function (p) { return p.id === planId; });
+        if (!plan) return;
+        if (!dateKey) return;
+
+        if (plan.records[dateKey]) {
+            delete plan.records[dateKey];
+            saveData();
+            render();
+            if (!$('#calendarModal').hidden) renderCalendar();
+
+            if (dateKey > today()) {
+                toast('「' + plan.name + '」' + fmtShort(dateKey) + ' 的提前打卡已取消');
+            } else {
+                toast('「' + plan.name + '」' + fmtShort(dateKey) + ' 的记录已清零');
+            }
+        } else {
+            toast('「' + plan.name + '」' + fmtShort(dateKey) + ' 暂无记录');
+        }
+    }
+
+    // ====================拖动排序====================
+    function startDrag(li, planId, startY) {
+        var rect = li.getBoundingClientRect();
+        var placeholder = document.createElement('li');
+        placeholder.className = 'plan-placeholder';
+        placeholder.style.height = rect.height + 'px';
+
+        li.parentNode.insertBefore(placeholder, li);
+
+        li.classList.add('dragging');
+        li.style.position = 'fixed';
+        li.style.left = rect.left + 'px';
+        li.style.top = rect.top + 'px';
+        li.style.width = rect.width + 'px';
+        li.style.height = rect.height + 'px';
+        li.style.margin = '0';
+        li.style.zIndex = '999';
+        li.style.pointerEvents = 'none';
+
+        dragState = {
+            id: planId,
+            el: li,
+            placeholder: placeholder,
+            offsetY: startY - rect.top
+        };
+
+        document.body.classList.add('dragging-active');
+        document.addEventListener('pointermove', onDragMove);
+        document.addEventListener('pointerup', onDragEnd);
+        document.addEventListener('pointercancel', onDragEnd);
+
+        if (navigator.vibrate) navigator.vibrate(12);
+    }
+
+    function onDragMove(e) {
+        if (!dragState) return;
+        if (e.cancelable) e.preventDefault();
+
+        var li = dragState.el;
+        li.style.top = (e.clientY - dragState.offsetY) + 'px';
+
+        var list = $('#planList');
+        var others = Array.prototype.slice.call(list.querySelectorAll('.plan:not(.dragging)'));
+        var pointerY = e.clientY;
+
+        var target = null;
+        for (var i = 0; i < others.length; i++) {
+            var r = others[i].getBoundingClientRect();
+            if (pointerY < r.top + r.height / 2) { target = others[i]; break; }
+        }
+
+        var ph = dragState.placeholder;
+        if (target) {
+            if (ph.nextSibling !== target) list.insertBefore(ph, target);
+        } else {
+            if (list.lastElementChild !== ph) list.appendChild(ph);
+        }
+    }
+
+    function onDragEnd() {
+        if (!dragState) return;
+
+        var li = dragState.el;
+        var ph = dragState.placeholder;
+        var list = $('#planList');
+
+        var items = Array.prototype.slice.call(list.children).filter(function (c) {
+            if (c === ph) return true;
+            if (c.classList && c.classList.contains('plan') && !c.classList.contains('dragging')) return true;
+            return false;
+        });
+        var newIndex = items.indexOf(ph);
+
+        var oldIndex = state.plans.findIndex(function (p) { return p.id === dragState.id; });
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+            var moved = state.plans.splice(oldIndex, 1)[0];
+            state.plans.splice(newIndex, 0, moved);
+            saveData();
+        }
+
+        li.classList.remove('dragging');
+        li.style.cssText = '';
+        ph.remove();
+
+        document.body.classList.remove('dragging-active');
+        document.removeEventListener('pointermove', onDragMove);
+        document.removeEventListener('pointerup', onDragEnd);
+        document.removeEventListener('pointercancel', onDragEnd);
+
+        dragState = null;
+        lastLongPressAt = Date.now();
+
+        render();
+    }
+
     // ====================确认弹窗====================
-    function showConfirm(title, msgHTML, onYes) {
+    function showConfirm(title, msgHTML, onYes, returnModal) {
         $('#confirmTitle').textContent = title;
         $('#confirmMsg').innerHTML = msgHTML;
         confirmCallback = onYes;
+        confirmReturnModal = returnModal || null;
         openModal('confirmModal');
     }
 
-    // ====================日历渲染====================
+    // ====================日历统计 / 渲染====================
     function getDayStats(dateKey) {
-        let total = 0, done = 0;
-        for (let i = 0; i < state.plans.length; i++) {
-            const p = state.plans[i];
+        var total = 0, done = 0;
+        for (var i = 0; i < state.plans.length; i++) {
+            var p = state.plans[i];
             if (p.start && dateKey < p.start) continue;
             if (p.end && dateKey > p.end) continue;
             total++;
@@ -896,31 +1268,55 @@
         return { total: total, done: done };
     }
 
+    // 连续「全部完成」的天数
+    function getAllDoneStreak() {
+        if (!state.plans.length) return 0;
+        var t = today();
+        var ts = getDayStats(t);
+
+        var cur;
+        if (ts.total > 0 && ts.done === ts.total) {
+            cur = t;
+        } else {
+            cur = shiftKey(t, -1);
+        }
+
+        var streak = 0;
+        while (streak < 3000) {
+            var st = getDayStats(cur);
+            if (st.total === 0) break;
+            if (st.done < st.total) break;
+            streak++;
+            cur = shiftKey(cur, -1);
+        }
+        return streak;
+    }
+
     function renderCalendar() {
-        const t = today();
-        const year = calYear, month = calMonth;
+        var t = today();
+        var year = calYear, month = calMonth;
 
         $('#calTitle').textContent = year + '年' + (month + 1) + '月';
 
-        const startWeekday = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const prevMonthDays = new Date(year, month, 0).getDate();
-        const trailing = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
+        var startWeekday = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var prevMonthDays = new Date(year, month, 0).getDate();
+        var trailing = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
 
-        let html = '';
-        for (let i = 0; i < startWeekday; i++) {
-            const d = prevMonthDays - startWeekday + 1 + i;
-            html += '<button class="cal-day other" disabled tabindex="-1">' + d + '</button>';
+        var html = '';
+        for (var i = 0; i < startWeekday; i++) {
+            var d0 = prevMonthDays - startWeekday + 1 + i;
+            html += '<button class="cal-day other" disabled tabindex="-1">' + d0 + '</button>';
         }
 
-        for (let d = 1; d <= daysInMonth; d++) {
-            const key = year + '-' + pad(month + 1) + '-' + pad(d);
-            const stats = getDayStats(key);
-            const isToday = key === t;
-            const isSel = key === calSelectedKey;
-            const isFuture = key > t;
+        for (var d = 1; d <= daysInMonth; d++) {
+            var key = year + '-' + pad(month + 1) + '-' + pad(d);
+            var stats = getDayStats(key);
+            var isToday = key === t;
+            var isSel = key === calSelectedKey;
+            var isFuture = key > t;
 
-            let dotCls = '';
+            var dotCls = '';
             if (stats.total > 0) {
                 if (isFuture) dotCls = 'future';
                 else if (stats.done === stats.total) dotCls = '';
@@ -928,7 +1324,7 @@
                 else dotCls = 'miss';
             }
 
-            let cls = 'cal-day';
+            var cls = 'cal-day';
             if (isToday) cls += ' today';
             if (isSel) cls += ' selected';
 
@@ -938,8 +1334,8 @@
             '</button>';
         }
 
-        for (let i = 1; i <= trailing; i++) {
-            html += '<button class="cal-day other" disabled tabindex="-1">' + i + '</button>';
+        for (var j = 1; j <= trailing; j++) {
+            html += '<button class="cal-day other" disabled tabindex="-1">' + j + '</button>';
         }
 
         $('#calGrid').innerHTML = html;
@@ -947,44 +1343,49 @@
     }
 
     function renderCalDetail() {
-        const key = calSelectedKey;
+        var key = calSelectedKey;
         if (!key) {
             $('#calDetail').innerHTML = '<div class="cal-empty">点击上方日期查看当天完成情况</div>';
             return;
         }
 
-        const p = key.split('-').map(Number);
-        const dateObj = new Date(p[0], p[1] - 1, p[2]);
-        const wd = '日一二三四五六'[dateObj.getDay()];
-        const t = today();
-        const isFuture = key > t;
+        var p = key.split('-').map(Number);
+        var dateObj = new Date(p[0], p[1] - 1, p[2]);
+        var wd = '日一二三四五六'[dateObj.getDay()];
+        var t = today();
+        var isFuture = key > t;
 
-        let title = fmtShort(key) + ' 周' + wd;
+        var title = fmtShort(key) + ' 周' + wd;
         if (key === t) title += ' · 今天';
 
-        const items = [];
-        for (let i = 0; i < state.plans.length; i++) {
-            const plan = state.plans[i];
+        var items = [];
+        for (var i = 0; i < state.plans.length; i++) {
+            var plan = state.plans[i];
             if (plan.start && key < plan.start) continue;
             if (plan.end && key > plan.end) continue;
-            const goal = plan.goal || 1;
-            const count = plan.records[key] || 0;
+            var goal = plan.goal || 1;
+            var count = plan.records[key] || 0;
             items.push({
-                name: plan.name, goal: goal, count: count,
-                done: count >= goal, over: count > goal, future: isFuture
+                id: plan.id,
+                name: plan.name,
+                goal: goal,
+                count: count,
+                done: count >= goal,
+                over: count > goal,
+                future: isFuture
             });
         }
 
-        let body = '<div class="cal-detail-title">' + title + '</div>';
+        var body = '<div class="cal-detail-title">' + title + '</div>';
 
         if (!items.length) {
             body += '<div class="cal-empty">这一天没有进行中的计划</div>';
         } else {
-            const doneCount = items.filter(function (x) { return x.done; }).length;
+            var doneCount = items.filter(function (x) { return x.done; }).length;
             body += '<div class="cal-summary">完成 ' + doneCount + ' / ' + items.length + ' 项</div>';
             body += '<ul class="cal-list">';
             items.forEach(function (it) {
-                let text, cls;
+                var text, cls;
                 if (it.over) {
                     text = it.count + '/' + it.goal + ' ↑';
                     cls = 'over';
@@ -999,9 +1400,16 @@
                 } else {
                     text = '未完成'; cls = 'miss';
                 }
-                body += '<li>' +
+
+                var btnCls = 'cal-check-btn';
+                var btnText = '+';
+                if (it.done) { btnCls += ' on'; btnText = '✓'; }
+                else if (it.count > 0) { btnCls += ' partial'; btnText = String(it.count); }
+
+                body += '<li data-plan-id="' + it.id + '">' +
                     '<span class="cal-plan-name">' + escapeHTML(it.name) + '</span>' +
                     '<span class="cal-status ' + cls + '">' + text + '</span>' +
+                    '<button class="' + btnCls + '" type="button" title="点击打卡 / 长按清零">' + btnText + '</button>' +
                 '</li>';
             });
             body += '</ul>';
@@ -1011,8 +1419,8 @@
     }
 
     function openCalendar() {
-        const t = today();
-        const p = t.split('-').map(Number);
+        var t = today();
+        var p = t.split('-').map(Number);
         calYear = p[0];
         calMonth = p[1] - 1;
         calSelectedKey = t;
@@ -1020,11 +1428,44 @@
         renderCalendar();
     }
 
+    // ====================批量设置====================
+    function renderBulkSet() {
+        var list = $('#bsList');
+        if (!state.plans.length) {
+            list.innerHTML = '<li style="justify-content:center;color:var(--muted);cursor:default;">还没有计划</li>';
+        } else {
+            list.innerHTML = state.plans.map(function (p) {
+                var on = bsSelected.has(p.id);
+                return '<li data-id="' + p.id + '">' +
+                    '<input type="checkbox" ' + (on ? 'checked' : '') + '>' +
+                    '<span>' + escapeHTML(p.name) + '</span>' +
+                '</li>';
+            }).join('');
+        }
+
+        $('#bsCount').textContent = bsSelected.size;
+        var allSel = state.plans.length > 0 && bsSelected.size === state.plans.length;
+        $('#bsSelectToggle').textContent = allSel ? '取消全选' : '全选';
+    }
+
+    function openBulkSet() {
+        bsSelected = new Set();
+        if (state.plans.length) {
+            state.plans.forEach(function (p) { bsSelected.add(p.id); });
+        }
+        $('#bsStart').value = '';
+        $('#bsEnd').value = '';
+        $('#bsGoal').value = 1;
+        renderBulkSet();
+        openModal('bulkSetModal');
+    }
+
     // ====================弹窗控制====================
     function openModal(id) {
         $('#overlay').hidden = false;
-        ['addModal', 'menuModal', 'editModal', 'calendarModal', 'confirmModal'].forEach(function (mId) {
-            document.getElementById(mId).hidden = (mId !== id);
+        ['addModal', 'menuModal', 'editModal', 'calendarModal', 'confirmModal', 'bulkSetModal'].forEach(function (mId) {
+            var el = document.getElementById(mId);
+            if (el) el.hidden = (mId !== id);
         });
     }
 
@@ -1033,10 +1474,12 @@
         $('#bulkInput').value = '';
         editingPlanId = null;
         confirmCallback = null;
+        confirmReturnModal = null;
+        bsSelected = new Set();
     }
 
     function toast(msg) {
-        const el = $('#toast');
+        var el = $('#toast');
         clearTimeout(toastTimer);
         el.textContent = msg;
         el.classList.add('show');
@@ -1045,13 +1488,13 @@
 
     // ====================删除操作====================
     function deletePlan(id) {
-        const plan = state.plans.find(p => p.id === id);
+        var plan = state.plans.find(function (p) { return p.id === id; });
         if (!plan) return;
         showConfirm(
             '删除计划',
             '确定要删除「<b>' + escapeHTML(plan.name) + '</b>」吗？<br>此操作不可恢复。',
             function () {
-                state.plans = state.plans.filter(p => p.id !== id);
+                state.plans = state.plans.filter(function (p) { return p.id !== id; });
                 saveData();
                 render();
                 toast('已删除');
@@ -1063,26 +1506,30 @@
     $('#planList').addEventListener('click', function (e) {
         if (Date.now() - lastLongPressAt < 400) return;
 
-        // 删除按钮优先
-        const delBtn = e.target.closest('.del-btn');
+        var delBtn = e.target.closest('.del-btn');
         if (delBtn) {
             e.preventDefault();
             e.stopPropagation();
-            const li = delBtn.closest('.plan');
-            if (li) deletePlan(li.dataset.id);
+            var dli = delBtn.closest('.plan');
+            if (dli) deletePlan(dli.dataset.id);
             return;
         }
 
-        const li = e.target.closest('.plan');
+        var li = e.target.closest('.plan');
         if (!li) return;
-        const id = li.dataset.id;
-        const plan = state.plans.find(p => p.id === id);
+        var id = li.dataset.id;
+        var plan = state.plans.find(function (p) { return p.id === id; });
         if (!plan) return;
 
         if (selectMode) {
             if (selected.has(id)) selected.delete(id);
             else selected.add(id);
             render();
+            return;
+        }
+
+        if (e.target.closest('.check')) {
+            toggleCheck(plan);
             return;
         }
 
@@ -1096,50 +1543,70 @@
             setTimeout(function () { $('#editInput').focus(); }, 60);
             return;
         }
-
-        toggleCheck(plan);
     }, false);
 
-    // 长按清零（只作用于打卡圆圈）
+    // 主页长按：圆圈=清零，后半部分=拖动排序
     $('#planList').addEventListener('pointerdown', function (e) {
         if (selectMode) return;
-        const check = e.target.closest('.check');
-        if (!check) return;
-        const li = check.closest('.plan');
-        if (!li) return;
-        const planId = li.dataset.id;
 
+        var li = e.target.closest('.plan');
+        if (!li) return;
+        var planId = li.dataset.id;
+
+        if (e.target.closest('.check')) {
+            clearTimeout(dragPressTimer);
+            dragPressTimer = null;
+            clearTimeout(pressTimer);
+            pressTimer = setTimeout(function () {
+                lastLongPressAt = Date.now();
+                resetToday(planId);
+                pressTimer = null;
+            }, 600);
+            return;
+        }
+
+        if (e.target.closest('.del-btn')) return;
+
+        if (state.plans.length < 2) return;
         clearTimeout(pressTimer);
-        pressTimer = setTimeout(function () {
-            lastLongPressAt = Date.now();
-            resetToday(planId);
-            pressTimer = null;
+        pressTimer = null;
+        clearTimeout(dragPressTimer);
+        dragStartY = e.clientY;
+        dragPressTimer = setTimeout(function () {
+            dragPressTimer = null;
+            startDrag(li, planId, dragStartY);
         }, 600);
     });
 
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (evt) {
         $('#planList').addEventListener(evt, function () {
-            clearTimeout(pressTimer);
-            pressTimer = null;
+            if (!dragState) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+                clearTimeout(dragPressTimer);
+                dragPressTimer = null;
+            }
         });
     });
 
     $('#planList').addEventListener('contextmenu', function (e) {
-        if (e.target.closest('.check')) e.preventDefault();
+        if (e.target.closest('.check') || e.target.closest('.plan-info')) {
+            e.preventDefault();
+        }
     });
 
     // ====================编辑保存====================
     $('#confirmEditBtn').addEventListener('click', function () {
         if (!editingPlanId) return;
-        const newName = $('#editInput').value.trim();
+        var newName = $('#editInput').value.trim();
         if (!newName) { toast('名称不能为空'); return; }
 
-        const s = $('#editStart').value || null;
-        const en = $('#editEnd').value || null;
+        var s = $('#editStart').value || null;
+        var en = $('#editEnd').value || null;
         if (s && en && s > en) { toast('开始日期不能晚于结束日期'); return; }
 
-        const goal = normGoal($('#editGoal').value);
-        const p = state.plans.find(x => x.id === editingPlanId);
+        var goal = normGoal($('#editGoal').value);
+        var p = state.plans.find(function (x) { return x.id === editingPlanId; });
         if (p) {
             p.name = newName;
             p.start = s;
@@ -1154,8 +1621,8 @@
 
     document.querySelectorAll('[data-preset]').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            const t = today();
-            const preset = this.dataset.preset;
+            var t = today();
+            var preset = this.dataset.preset;
             if (preset === 'clear') { $('#editStart').value = ''; $('#editEnd').value = ''; }
             else if (preset === 'today') { $('#editStart').value = t; $('#editEnd').value = ''; }
             else if (preset === 'week') { $('#editStart').value = t; $('#editEnd').value = shiftKey(t, 6); }
@@ -1185,16 +1652,28 @@
         b.addEventListener('click', closeModal);
     });
 
-    // 确认弹窗按钮
+    // 确认弹窗按钮（支持返回上一级弹窗）
     $('#confirmYes').addEventListener('click', function () {
-        const cb = confirmCallback;
+        var cb = confirmCallback;
+        var ret = confirmReturnModal;
         confirmCallback = null;
-        closeModal();
+        confirmReturnModal = null;
+        if (ret) {
+            openModal(ret);
+        } else {
+            closeModal();
+        }
         if (cb) cb();
     });
     $('#confirmNo').addEventListener('click', function () {
+        var ret = confirmReturnModal;
         confirmCallback = null;
-        closeModal();
+        confirmReturnModal = null;
+        if (ret) {
+            openModal(ret);
+        } else {
+            closeModal();
+        }
     });
 
     // 日期按钮 → 日历
@@ -1211,32 +1690,150 @@
         renderCalendar();
     });
     $('#calGrid').addEventListener('click', function (e) {
-        const btn = e.target.closest('.cal-day');
+        var btn = e.target.closest('.cal-day');
         if (!btn || btn.disabled || !btn.dataset.key) return;
         calSelectedKey = btn.dataset.key;
         renderCalendar();
     });
     $('#calToday').addEventListener('click', function () {
-        const t = today();
-        const p = t.split('-').map(Number);
+        var t = today();
+        var p = t.split('-').map(Number);
         calYear = p[0]; calMonth = p[1] - 1; calSelectedKey = t;
         renderCalendar();
     });
 
-    // ====================批量添加====================
+    // ★ 日历详情里：点击打卡 / 长按清零
+    $('#calDetail').addEventListener('click', function (e) {
+        // 长按刚结束 → 忽略本次 click
+        if (Date.now() - calLastLongPressAt < 400) return;
+
+        var btn = e.target.closest('.cal-check-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        var li = btn.closest('li[data-plan-id]');
+        if (!li) return;
+        var planId = li.dataset.planId;
+        var plan = state.plans.find(function (p) { return p.id === planId; });
+        if (!plan) return;
+        if (!calSelectedKey) return;
+
+        toggleCheckOnDate(plan, calSelectedKey);
+    });
+
+    // 日历长按检测
+    $('#calDetail').addEventListener('pointerdown', function (e) {
+        var btn = e.target.closest('.cal-check-btn');
+        if (!btn) return;
+        var li = btn.closest('li[data-plan-id]');
+        if (!li) return;
+        var planId = li.dataset.planId;
+
+        clearTimeout(calPressTimer);
+        calPressTimer = setTimeout(function () {
+            calLastLongPressAt = Date.now();
+            resetDatePlan(planId, calSelectedKey);
+            calPressTimer = null;
+        }, 600);
+    });
+
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (evt) {
+        $('#calDetail').addEventListener(evt, function () {
+            clearTimeout(calPressTimer);
+            calPressTimer = null;
+        });
+    });
+
+    $('#calDetail').addEventListener('contextmenu', function (e) {
+        if (e.target.closest('.cal-check-btn')) e.preventDefault();
+    });
+
+    // ====================批量设置逻辑====================
+    $('#bsList').addEventListener('click', function (e) {
+        var li = e.target.closest('li[data-id]');
+        if (!li) return;
+        var id = li.dataset.id;
+        if (bsSelected.has(id)) bsSelected.delete(id);
+        else bsSelected.add(id);
+        renderBulkSet();
+    });
+
+    $('#bsSelectToggle').addEventListener('click', function () {
+        if (state.plans.length > 0 && bsSelected.size === state.plans.length) {
+            bsSelected = new Set();
+        } else {
+            bsSelected = new Set();
+            state.plans.forEach(function (p) { bsSelected.add(p.id); });
+        }
+        renderBulkSet();
+    });
+
+    document.querySelectorAll('[data-bspreset]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var t = today();
+            var preset = this.dataset.bspreset;
+            if (preset === 'clear') { $('#bsStart').value = ''; $('#bsEnd').value = ''; }
+            else if (preset === 'today') { $('#bsStart').value = t; $('#bsEnd').value = ''; }
+            else if (preset === 'week') { $('#bsStart').value = t; $('#bsEnd').value = shiftKey(t, 6); }
+            else if (preset === 'month') { $('#bsStart').value = t; $('#bsEnd').value = shiftKey(t, 29); }
+        });
+    });
+
+    document.querySelectorAll('[data-bsgoal]').forEach(function (btn) {
+        btn.addEventListener('click', function () { $('#bsGoal').value = this.dataset.bsgoal; });
+    });
+
+    $('#bsApplyBtn').addEventListener('click', function () {
+        if (!bsSelected.size) { toast('请先选择计划'); return; }
+
+        var s = $('#bsStart').value || null;
+        var en = $('#bsEnd').value || null;
+        if (s && en && s > en) { toast('开始日期不能晚于结束日期'); return; }
+
+        var goal = normGoal($('#bsGoal').value);
+
+        var n = 0;
+        state.plans.forEach(function (p) {
+            if (bsSelected.has(p.id)) {
+                p.start = s;
+                p.end = en;
+                p.goal = goal;
+                n++;
+            }
+        });
+
+        saveData();
+        render();
+        closeModal();
+        toast('已设置 ' + n + ' 个计划');
+    });
+
+    // ====================工具栏====================
     $('#addBtn').addEventListener('click', function () {
         openModal('addModal');
         setTimeout(function () { $('#bulkInput').focus(); }, 60);
     });
 
+    $('#bulkSetBtn').addEventListener('click', function () {
+        if (!state.plans.length) { toast('还没有计划'); return; }
+        openBulkSet();
+    });
+
+    $('#selectBtn').addEventListener('click', function () {
+        selectMode = true;
+        selected.clear();
+        render();
+    });
+
     function doAdd() {
-        const raw = $('#bulkInput').value;
-        const lines = raw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+        var raw = $('#bulkInput').value;
+        var lines = raw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
         if (!lines.length) { closeModal(); return; }
 
-        const existing = {};
+        var existing = {};
         state.plans.forEach(function (p) { existing[p.name] = true; });
-        let added = 0;
+        var added = 0;
         lines.forEach(function (name) {
             if (existing[name]) return;
             existing[name] = true;
@@ -1246,7 +1843,7 @@
         saveData();
         closeModal();
         render();
-        toast(added ? `已添加 ${added} 个计划` : '没有新增（名称已存在）');
+        toast(added ? '已添加 ' + added + ' 个计划' : '没有新增（名称已存在）');
     }
 
     $('#confirmAddBtn').addEventListener('click', doAdd);
@@ -1255,12 +1852,6 @@
     });
 
     // ====================批量删除====================
-    $('#selectBtn').addEventListener('click', function () {
-        selectMode = true;
-        selected.clear();
-        render();
-    });
-
     $('#cancelSelectBtn').addEventListener('click', function () {
         selectMode = false;
         selected.clear();
@@ -1277,7 +1868,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (!selected.size) { toast('请先选择要删除的计划'); return; }
-        const count = selected.size;
+        var count = selected.size;
         showConfirm(
             '批量删除',
             '确定要删除选中的 <b>' + count + '</b> 个计划吗？<br>此操作不可恢复。',
@@ -1296,9 +1887,9 @@
     $('#moreBtn').addEventListener('click', function () { openModal('menuModal'); });
 
     $('#exportBtn').addEventListener('click', function () {
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
         a.href = url;
         a.download = '打卡数据-' + today() + '.json';
         document.body.appendChild(a);
@@ -1311,11 +1902,11 @@
     $('#importBtn').addEventListener('click', function () { $('#fileInput').click(); });
 
     $('#fileInput').addEventListener('change', function (e) {
-        const file = e.target.files && e.target.files[0];
+        var file = e.target.files && e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function () {
-            let data;
+            var data;
             try {
                 data = JSON.parse(reader.result);
                 if (!data || !Array.isArray(data.plans)) throw new Error('文件格式不正确');
@@ -1336,13 +1927,12 @@
         e.target.value = '';
     });
 
-    // 清理 1 年前旧记录
     $('#cleanBtn').addEventListener('click', function () {
-        const cutoff = shiftKey(today(), -365);
-        let cleaned = 0;
+        var cutoff = shiftKey(today(), -365);
+        var cleaned = 0;
         state.plans.forEach(function (p) {
-            const nr = {};
-            for (const k in p.records) {
+            var nr = {};
+            for (var k in p.records) {
                 if (k >= cutoff) nr[k] = p.records[k];
                 else cleaned++;
             }
@@ -1386,7 +1976,7 @@
         render();
 
         setInterval(function () {
-            const t = today();
+            var t = today();
             if (t !== lastDay) { lastDay = t; render(); }
         }, 30000);
     }
